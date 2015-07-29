@@ -1,62 +1,62 @@
-var Path = {
+var Way = {
     'version': "0.8.4",
     'map': function (path) {
-        if (Path.routes.defined.hasOwnProperty(path)) {
-            return Path.routes.defined[path];
+        if (Way.routes.defined.hasOwnProperty(path)) {
+            return Way.routes.defined[path];
         } else {
-            return new Path.core.route(path);
+            return new Way.core.route(path);
         }
     },
     'root': function (path) {
-        Path.routes.root = path;
+        Way.routes.root = path;
     },
     'rescue': function (fn) {
-        Path.routes.rescue = fn;
+        Way.routes.rescue = fn;
     },
     'history': {
         'initial':{}, // Empty container for "Initial Popstate" checking variables.
         'pushState': function(state, title, path){
-            if(Path.history.supported){
-                if(Path.dispatch(path)){
+            if(Way.history.supported){
+                if(Way.dispatch(path)){
                     history.pushState(state, title, path);
                 }
             } else {
-                if(Path.history.fallback){
+                if(Way.history.fallback){
                     window.location.hash = "#" + path;
                 }
             }
         },
         'popState': function(event){
-            var initialPop = !Path.history.initial.popped && location.href == Path.history.initial.URL;
-            Path.history.initial.popped = true;
+            var initialPop = !Way.history.initial.popped && location.href == Way.history.initial.URL;
+            Way.history.initial.popped = true;
             if(initialPop) return;
-            Path.dispatch(document.location.pathname);
+            Way.dispatch(document.location.pathname);
         },
         'listen': function(fallback){
-            Path.history.supported = !!(window.history && window.history.pushState);
-            Path.history.fallback  = fallback;
+            Way.history.supported = !!(window.history && window.history.pushState);
+            Way.history.fallback  = fallback;
 
-            if(Path.history.supported){
-                Path.history.initial.popped = ('state' in window.history), Path.history.initial.URL = location.href;
-                window.onpopstate = Path.history.popState;
+            if(Way.history.supported){
+                Way.history.initial.popped = ('state' in window.history), Way.history.initial.URL = location.href;
+                window.onpopstate = Way.history.popState;
             } else {
-                if(Path.history.fallback){
-                    for(route in Path.routes.defined){
+                if(Way.history.fallback){
+                    for(route in Way.routes.defined){
                         if(route.charAt(0) != "#"){
-                          Path.routes.defined["#"+route] = Path.routes.defined[route];
-                          Path.routes.defined["#"+route].path = "#"+route;
+                          Way.routes.defined["#"+route] = Way.routes.defined[route];
+                          Way.routes.defined["#"+route].path = "#"+route;
                         }
                     }
-                    Path.listen();
+                    Way.listen();
                 }
             }
         }
     },
     'match': function (path, parameterize) {
         var params = {}, route = null, possible_routes, slice, i, j, compare;
-        for (route in Path.routes.defined) {
+        for (route in Way.routes.defined) {
             if (route !== null && route !== undefined) {
-                route = Path.routes.defined[route];
+                route = Way.routes.defined[route];
                 possible_routes = route.partition();
                 for (j = 0; j < possible_routes.length; j++) {
                     params = {};
@@ -85,13 +85,13 @@ var Path = {
     },
     'dispatch': function (passed_route) {
         var previous_route, matched_route;
-        if (Path.routes.current !== passed_route) {
-            Path.routes.previous = Path.routes.current;
-            Path.routes.current = passed_route;
-            matched_route = Path.match(passed_route, true);
+        if (Way.routes.current !== passed_route) {
+            Way.routes.previous = Way.routes.current;
+            Way.routes.current = passed_route;
+            matched_route = Way.match(passed_route, true);
 
-            if (Path.routes.previous) {
-                previous_route = Path.match(Path.routes.previous);
+            if (Way.routes.previous) {
+                previous_route = Way.match(Way.routes.previous);
                 if (previous_route !== null && previous_route.do_exit !== null) {
                     previous_route.do_exit();
                 }
@@ -101,22 +101,22 @@ var Path = {
                 matched_route.run();
                 return true;
             } else {
-                if (Path.routes.rescue !== null) {
-                    Path.routes.rescue();
+                if (Way.routes.rescue !== null) {
+                    Way.routes.rescue();
                 }
             }
         }
     },
     'listen': function () {
-        var fn = function(){ Path.dispatch(location.hash); }
+        var fn = function(){ Way.dispatch(location.hash); }
 
         if (location.hash === "") {
-            if (Path.routes.root !== null) {
-                location.hash = Path.routes.root;
+            if (Way.routes.root !== null) {
+                location.hash = Way.routes.root;
             }
         }
 
-        // The 'document.documentMode' checks below ensure that PathJS fires the right events
+        // The 'document.documentMode' checks below ensure that WayJS fires the right events
         // even in IE "Quirks Mode".
         if ("onhashchange" in window && (!document.documentMode || document.documentMode >= 8)) {
             window.onhashchange = fn;
@@ -125,7 +125,7 @@ var Path = {
         }
 
         if(location.hash !== "") {
-            Path.dispatch(location.hash);
+            Way.dispatch(location.hash);
         }
     },
     'core': {
@@ -135,7 +135,7 @@ var Path = {
             this.do_enter = [];
             this.do_exit = null;
             this.params = {};
-            Path.routes.defined[path] = this;
+            Way.routes.defined[path] = this;
         }
     },
     'routes': {
@@ -146,7 +146,7 @@ var Path = {
         'defined': {}
     }
 };
-Path.core.route.prototype = {
+Way.core.route.prototype = {
     'to': function (fn) {
         this.action = fn;
         return this;
@@ -177,10 +177,10 @@ Path.core.route.prototype = {
     'run': function () {
         var halt_execution = false, i, result, previous;
 
-        if (Path.routes.defined[this.path].hasOwnProperty("do_enter")) {
-            if (Path.routes.defined[this.path].do_enter.length > 0) {
-                for (i = 0; i < Path.routes.defined[this.path].do_enter.length; i++) {
-                    result = Path.routes.defined[this.path].do_enter[i].apply(this, null);
+        if (Way.routes.defined[this.path].hasOwnProperty("do_enter")) {
+            if (Way.routes.defined[this.path].do_enter.length > 0) {
+                for (i = 0; i < Way.routes.defined[this.path].do_enter.length; i++) {
+                    result = Way.routes.defined[this.path].do_enter[i].apply(this, null);
                     if (result === false) {
                         halt_execution = true;
                         break;
@@ -189,7 +189,7 @@ Path.core.route.prototype = {
             }
         }
         if (!halt_execution) {
-            Path.routes.defined[this.path].action();
+            Way.routes.defined[this.path].action();
         }
     }
 };
